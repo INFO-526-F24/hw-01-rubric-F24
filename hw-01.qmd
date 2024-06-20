@@ -1,0 +1,713 @@
+---
+title: "HW-01 Rubric"
+author: "Greg Chism"
+format: 
+  html:
+    embed-resources: true
+execute: 
+  warning: false
+  message: false
+  error: false
+toc: true
+---
+
+## 0 - Set up
+
+```{r load_libraries}
+#| message: false
+if (!require("pacman")) 
+  install.packages("pacman")
+
+pacman::p_load(devtools,
+               here,
+               tidyverse, 
+               openintro, 
+               gridExtra,
+               gtable,
+               ggpubr,
+               ggmap,
+               ggrepel,
+               patchwork,
+               units)
+devtools::install_github("tidyverse/dsbox")
+```
+
+1.  This block is to check if `pacman` package is installed or not, if it isn't then the package will be installed.
+
+2.  `p_load` is a function from `pacman` package to load other packages, if isn't installed `pacman` will handle the installation.
+
+## 1 - NYC marathon winners
+
+Getting the glimpse of the data:
+
+```{r nyc_data}
+nyc_marathon <- read_csv(here("data", "nyc_marathon.csv"))
+glimpse(nyc_marathon)
+```
+
+1.  We have 102 rows and 7 columns of data in `nyc_marathon`.
+
+First we will be omitting the `NA` values from the dataset in only time, year, division columns. Using `na.omit()` to remove the `NA` data in the specified columns and only those columns will be present at the end. Since we need only these columns it's fine to process.
+
+```{r na_values_nyc}
+cleaned_nyc_marathon <- nyc_marathon |>
+  drop_na(time, year, division)
+
+cleaned_nyc_marathon |> glimpse()
+```
+
+### A - Histogram and Box Plot of Marathon Times for All Runners:
+
+The `time` column can be our column of focus to generate the distribution of marathon times of all runners in the dataset. Now it is time to generate the plot.
+
+To generate the plot we will be using `geom_histogram` geom. We have some components involved in the code which are mentioned below:
+
+-   In the `geom_histogram` function I have provided binwidth as 150 meaning, data points will be grouped into bins where the width of each bin is 150 units.
+
+-   Next we will be setting labels in the plot using `labs()` to set axis labels, title etc,.
+
+-   We are setting the theme of the plot using `theme_minimal()`.
+
+```{r nyc_histogram_plot_a}
+# Using the cleaned_nyc_marathon variable created earlier as a data source
+# Time as the x axis respectively.
+histogram_plot <- 
+  ggplot(data = cleaned_nyc_marathon, mapping = aes(x = time)) +
+  geom_histogram(
+    binwidth = 150) +
+  labs(x = "Time (minutes)",
+       y = "Frequency",
+       title = "Distribution of NYC Marathon Times",
+       subtitle = "Spread of Race Times (Men and Women) - 1970 to 2020") +
+  theme_minimal()
+```
+
+```{r nyc_box_plot_a}
+# Using the cleaned_nyc_marathon variable created earlier as a data source
+# Time as the x axis respectively.
+boxplot_plot <- 
+  ggplot(data = cleaned_nyc_marathon, mapping = aes(x = time)) +
+  geom_boxplot() +
+  labs(x = "Time (minutes)", 
+       y = NULL,
+       title = "Exploring NYC Marathon Times: Box Plot",
+       subtitle = "All Race Times (Men and Women) - 1970 to 2020") +
+  theme_minimal()
+
+boxplot_plot
+```
+
+To display the plots side by side we will be using `grid.arrange()` from `gridExtra` package. I reset the labels and themes of the two individual plots to make them into a single plot.
+
+```{r nyc_plot_a}
+# Displaying the plots side by side using grid.arrange()
+grid.arrange(
+  histogram_plot,
+  boxplot_plot, nrow = 2)
+```
+
+#### **Features apparent in Histogram:**
+
+-   The histogram shows the shape of the distribution of marathon times, making it easy to see the overall pattern of the data.
+-   You can identify the number of peaks (modes) in the distribution, which may indicate multiple groups within the data.
+-   It provides a visual representation of the density of data points at different time intervals.
+
+#### **Features apparent in Box Plot:**
+
+-   The box plot provides a summary of the median and spread of the data.
+-   It helps identify potential outliers in the dataset, which are shown as individual data points beyond the whiskers of the box plot.
+-   It provides a clear indication of the presence of extreme values and their deviation from the main body of the data.
+
+In summary, the histogram is more suitable for revealing the shape and density of the distribution, while the box plot is better at summarizing key statistical features, identifying outliers, and assessing the symmetry of the data.
+
+### B - Side-by-Side Box Plots of Marathon Times for Men and Women:
+
+The `time` and `division` columns can be our columns of focus to generate the distribution of marathon times of all runners in the dataset. . Now it is time to generate the plot.
+
+To generate the plot we will be using `geom_boxplot` geom. We have some components involved in the code which are mentioned below:
+
+-   In the `geom_boxplot` function I have provided outlier parameters to differentiate them easily in the plot.
+
+-   Used `scale_fill_manual()` to change the filled colors in the density plot.
+
+-   Next we will be setting labels in the plot using `labs()` to set axis labels, title, legend title etc,.
+
+-   We are setting the theme of the plot using `theme_minimal()`.
+
+```{r nyc_plot_b}
+# Creating side-by-side box plots with custom colors
+# Using the cleaned_nyc_marathon variable created earlier as a data source
+# division and time as the x and y axis respectively.
+
+boxplot_gender_plot <-
+  ggplot(cleaned_nyc_marathon, aes(x = division, y = time, fill = division)) +
+  geom_boxplot() +
+  labs(
+    x = "Gender",
+    y = "Time (minutes)",
+    title = "NYC Marathon Times by Gender",
+    subtitle = "All Race Times (Men and Women) - 1970 to 2020",
+    fill = NULL) +
+  scale_fill_manual(values = c("#6073B1", "#A17724")) + 
+  theme_minimal()
+
+boxplot_gender_plot
+```
+
+#### Comparison of Marathon Times for Men and Women (from the side-by-side box plots):
+
+-   You can observe differences in the median and spread of marathon times between the two genders.
+-   You can see that the median of men is comparatively lower than that of women marathon time. And the spread of the marathon times is completely identifiable in the plot.
+-   It's easier to compare the quartiles and identify potential outliers for each gender using the side-by-side box plots.
+-   You can visually assess whether there are significant differences in marathon times between men and women.
+
+### C - Grouped Box Plot Without Redundancy:
+
+***What information in the above plot is redundant?***
+
+The legend is redundant in the plot since the x axis has the same information. The X-axis title can also be redundant in the plot, since it is evident from the box plot names in the x axis the plot is about men and women.
+
+```{r plot_c}
+# Creating a grouped box plot without redundancy
+# Using the cleaned_nyc_marathon variable created earlier as a data source
+# division and time as the x and y axis respectively.
+
+grouped_boxplot_plot <-
+  ggplot(cleaned_nyc_marathon, aes(x = division, y = time, fill = division)) +
+  geom_boxplot() +
+  labs(
+    x = "Gender",
+    y = "Time (minutes)",
+    title = "NYC Marathon Times by Gender (Grouped)",
+    subtitle = "All Race Times (Men and Women) - 1970 to 2020",
+    fill = NULL) +
+  scale_fill_manual(values = c("#6073B1", "#A17724"),
+                    guide = NULL) + 
+  theme_minimal()
+
+grouped_boxplot_plot
+```
+
+***How does this update change the data-to-ink ratio?***
+
+The update reduces the data to ink ratio owing to the usage of additional ink to represent the legend.
+
+### D - Time Series Plot of Marathon Times for Men and Women:
+
+The `time`, `year` and `division` columns can be our columns of focus to generate the time series plot of marathon times of all runners in the dataset. . Now it is time to generate the plot.
+
+To generate the plot we will be using `geom_point` geom. We have some components involved in the code which are mentioned below:
+
+-   Used `scale_color_manual()` to change the filled colors in the density plot.
+
+-   Next we will be setting labels in the plot using `labs()` to set axis labels, title etc,.
+
+-   We are setting the theme of the plot using `theme_minimal()`.
+
+```{r plot_d}
+# Creating a time series plot
+# Using the cleaned_nyc_marathon variable created earlier as a data source
+# division and time as the x and y axis respectively.
+
+time_series_plot <-
+  ggplot(cleaned_nyc_marathon,
+         aes(x = year, y = time, color = division, shape = division)) +
+  geom_line() +
+  geom_point(size = 2) +             
+  labs(x = "Year", 
+       y = "Time (minutes)",
+       title = "NYC Marathon Times Over the Years",
+       subtitle = "All Race Times (Men and Women) - 1970 to 2020",
+       color = "Gender",  
+       shape = "Gender") +
+  scale_color_manual(values = c("#6073B1", "#A17724")) + 
+  theme_minimal()
+
+time_series_plot
+```
+
+1.  Using `geom_point` geom to generate the time series plot.
+
+2.  Have to give same name to both shape and color legends to make it a one combined legend.
+
+In this time series plot, we can observe the marathon times of men and women over the years with different color and shape. It allows us to observe variations and trends in marathon times and how they evolve over time. The variation in marathon times is apparent in this plot compared to the previous box plots. And we can identify the notable changes in marathon times clearly in this plot.
+
+**Pattern:** The plot seems to be having some recurring or a systematic pattern as the trend is consistent weather while declining or increasing or no to little change.
+
+**Observation:** The trend which men and women marathon times is almost identical apart from few years. For example, around 2003 or 2004 marathon time of women has increased as opposed to men. Apart from these the trend followed by men and women marathon times are almost similar.
+
+## 2 - US counties
+
+The dataset `county` which comes with `openintro` package which we installed earlier and now we can directly access the data. Getting the glimpse of the data:
+
+```{r us_counties}
+glimpse(county)
+```
+
+***What does the following code do? Does it work? Does it make sense? Why/why not?***
+
+```{r us_counties_plot_a, warning=FALSE, message=FALSE, eval=FALSE}
+ggplot(county) +
+  geom_point(aes(x = median_edu, y = median_hh_income)) +
+  geom_boxplot(aes(x = smoking_ban, y = pop2017))
+```
+
+The code uses the `ggplot()` function to initialize a plot using the `county` dataset. It adds points to the plot using `geom_point()`, setting `median_edu` to the x-axis and `median_hh_income` to the y-axis. It then adds boxplots to the same plot using `geom_boxplot()`, setting `smoking_ban` to the x-axis and `pop2017` to the y-axis.
+
+However, the code works but the visualization which it wants to showcase might not protrayed correctly because it does not show distribution of the data correctly as it intends. It tries to mix a categorical variable (`smoking_ban`) with a continuous variable (`pop2017`) in a boxplot, which typically works better with continuous variables on both axes. It might be more appropriate to use a different visualization technique, such as a bar chart.
+
+***Which of the following two plots makes it easier to compare poverty levels (poverty) across people from different median education levels (median_edu)? What does this say about when to place a faceting variable across rows or columns?***
+
+```{r us_counties_plot_b1, warning=FALSE, message=FALSE}
+ggplot(county |> filter(!is.na(median_edu))) +    geom_point(aes(x = homeownership, y = poverty)) +    facet_grid(median_edu ~ .)
+```
+
+```{r us_counties_plot_b2, warning=FALSE, message=FALSE}
+ggplot(county |> filter(!is.na(median_edu))) + 
+  geom_point(aes(x = homeownership, y = poverty)) + 
+  facet_grid(. ~ median_edu)
+```
+
+To compare poverty levels across people from different median education levels, it is usually easier to place the faceting variable (`median_edu`) along the columns. This allows you to have separate panels for each median education level, making it easier to compare poverty levels across different education levels.
+
+Therefore, the second plot using `facet_grid(. ~ median_edu)` is more suitable for comparing poverty levels across different median education levels. And the second plot is also visually appealing.
+
+***Recreate the R code necessary to generate the following graphs. Note that wherever a categorical variable is used in the plot, it's `metro`.***
+
+While recreating the plots I have modified some bits like adding title to the plot to make it more readable. To display the plots side by side we will be using `grid.arrange()` from `gridExtra` package.
+
+```{r us_counties_plot_AB}
+# Creating a scatter plot
+# Using the county variable created earlier as a data source
+# homeownership as the x, poverty as y axis
+
+# plot A
+county_plot_a <- county |> 
+  ggplot(aes(x = homeownership, y = poverty)) +
+  geom_point() +     
+  labs(title = "Plot A")
+
+# plot B
+county_plot_b <- county |>
+  ggplot(aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +               
+  labs(title = "Plot B")
+
+grid.arrange(county_plot_a, county_plot_b, ncol = 2)
+```
+
+1.  Basic usage of `geom_point()` geom to plot a scatter plot
+
+2.  Plotting a `geom_smooth()` plot with out any standard error
+
+3.  Using `grid.arrange()` from `gridExtra` package to arrange plots in a grid.
+
+```{r us_counties_plot_CD}
+# Creating a scatter plot
+# Using the county variable created earlier as a data source
+# homeownership as the x, poverty as y axis
+
+# plot C
+county_plot_c <- county |> 
+  ggplot(aes(x = homeownership, y = poverty, group = metro)) +
+  geom_point() +
+  geom_smooth(se = FALSE, color = "green") +               
+  labs(title = "Plot C")
+
+# plot D
+county_plot_d <- county |>
+  ggplot(aes(x = homeownership, y = poverty)) +
+  geom_smooth(se = FALSE) +    
+  geom_point() +
+  labs(title = "Plot D")
+
+grid.arrange(county_plot_c, county_plot_d, ncol = 2)
+```
+
+1.  Plotting the `geom_smooth()` plot after plotting the scatter plot and setting custom colors to it.
+
+2.  Plotting the `geom_smooth()` plot before plotting the scatter plot and setting custom colors to it.
+
+3.  Using `grid.arrange()` from `gridExtra` package to arrange plots in a grid.
+
+```{r us_counties_plot_EF}
+# Creating a scatter plot
+# Using the county variable created earlier as a data source
+# homeownership as the x, poverty as y axis
+
+# plot E
+county_plot_e <- county |> 
+  ggplot(aes(x = homeownership, y = poverty)) +
+  geom_point(aes(color = metro)) +
+  geom_smooth(aes(linetype = metro), se = FALSE) +
+  guides(linetype = guide_legend(order = 1), 
+         color = guide_legend(order = 2)) +
+  labs(title = "Plot E")
+
+# plot F
+county_plot_f <- county |>
+  ggplot(aes(x = homeownership, y = poverty, color = metro)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(title = "Plot f")
+
+grid.arrange(county_plot_e, county_plot_f, ncol = 2)
+```
+
+1.  Plotting the `geom_smooth()` plot after plotting the scatter plot and setting custom colors to only geom smooth plot. And also setting a line type based on the category metro and color based on metro to scatter plot.
+
+2.  Plotting the `geom_smooth()` plot after plotting the scatter plot and setting colors to scatter plot and geom smooth plot based on metro category.
+
+3.  Using `grid.arrange()` from `gridExtra` package to arrange plots in a grid.
+
+```{r us_counties_plot_GH}
+# Creating a scatter plot
+# Using the county variable created earlier as a data source
+# homeownership as the x, poverty as y axis
+
+# plot G
+county_plot_g <- county |> 
+  ggplot(aes(x = homeownership, y = poverty)) +
+  geom_point(aes(color = metro)) +
+  geom_smooth(se = FALSE) +
+  labs(title = "Plot G")
+
+# plot H
+county_plot_h <- county |>
+  ggplot(aes(x = homeownership, y = poverty, color = metro)) +
+  geom_point() +
+  labs(title = "Plot H")
+
+grid.arrange(county_plot_g, county_plot_h, ncol = 2)
+```
+
+1.  The plot will be having `geom_smooth` plotted on the combined data of metro category as a part to previous plots.
+
+2.  Normal scatter plot based on the category `metro`.
+
+3.  Using `grid.arrange()` from `gridExtra` package to arrange plots in a grid.
+
+## 3 - Credit card balances
+
+The data for this exercise is on credit card balances. The dataset is in the `data` folder of your repository, and it's called `credit.csv`. It contains the following variables:
+
+-   `balance`: Credit card balance in \$
+
+-   `income`: Income in \$1,000
+
+-   `student`: Whether the individual is a student (`Yes`) or not (`No`)
+
+-   `married`: Whether the individual is a married (`Yes`) or not (`No`)
+
+-   `limit`: Credit limit
+
+```{r}
+credit <- read_csv(here("data", "credit.csv"))
+
+credit |> glimpse()
+```
+
+```{r}
+#| label: student_married
+married_names <- c("No" = "married: No", "Yes" ="married: Yes")
+student_names <- c("No" = "student: No", "Yes" = "student: Yes")
+
+credit |>
+  ggplot(aes(income, balance, color = student, shape = student)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_grid(student ~ married, labeller = labeller(married = married_names,
+                                                    student = student_names)) +
+  scale_x_continuous(labels = scales::dollar_format(suffix = "K")) +
+  scale_y_continuous(labels = scales::dollar) +
+  scale_color_manual(values = c("#0072B5", "#DC0000")) +
+  labs(x = "Income",
+       y = "Credit card balance") +
+  theme_bw(base_size = 14) +
+  theme(legend.position = "none")
+```
+
+Marital status may impact credit card balance variability, as married individuals' scatterplots show broader dispersion, hinting at possibly shared finances and higher limits. Unmarried persons exhibit a stronger income-balance correlation, suggesting more consistent financial patterns.
+
+Student status also appears influential; students present lower and less variable credit balances, possibly due to limited credit histories and incomes. Non-students display more varied balances that rise with income.
+
+Marital and student statuses seem to offer additional insights into credit card balance beyond income, indicating distinct spending behaviors. Their predictive value, however, needs statistical validation to ensure they meaningfully improve prediction models.
+
+```{r}
+#| label: credit_utilization
+credit |>
+  ggplot(aes(income, balance/limit, color = student, shape = student)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_grid(student ~ married, labeller = labeller(married = married_names,
+                                                    student = student_names)) +
+  scale_x_continuous(labels = scales::dollar_format(suffix = "K")) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(values = c("#0072B5", "#DC0000")) +
+  labs(x = "Income",
+       y = "Credit utilization") +
+  theme_bw(base_size = 14) +
+  theme(legend.position = "none")
+```
+
+The scatterplots show differences in how income relates to credit balance and credit utilization across marital and student statuses:
+
+-   Credit balance typically rises with income, but credit utilization does not show a consistent increase.
+
+-   Unmarried individuals have a positive correlation between both income and credit balance, and income and credit utilization, although the latter is weaker.
+
+-   Married individuals' credit utilization does not markedly increase with income, suggesting higher credit limits may keep utilization percentages stable.
+
+-   For students, higher income does not lead to higher credit utilization, hinting at cautious credit use or lower credit limits, whereas non-students exhibit slight increases in utilization with income.
+
+In summary, while higher income generally correlates with higher credit balances, it does not equally translate to higher credit utilization, with marital and student statuses influencing these relationships differently.
+
+## 4 - Rental apartments in SF
+
+The dataset `rental_data` which comes with `tidytuesdayR` package which we installed earlier and now we can directly access the data. Getting the glimpse of the data:
+
+Load the TidyTuesday dataset and filter it to include only rentals in San Francisco with a full unit available:
+
+```{r load_data, warning=FALSE, message=FALSE}
+rental_data <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/rent.csv')  
+
+glimpse(rental_data)
+```
+
+1.  Reading the data from a csv file which is in github.
+
+Inspecting the data using `unique()` and `length()` as we need know how many neighborhoods are present.
+
+```{r data_info_rents}
+# getting all the unique values from nhood column
+length(unique(rental_data$nhood))
+```
+
+There are total of 167 neighborhoods present. Now filtering the data based on the given conditions:
+
+-   Filter data for `san fansisco` city and rentals where the full unit is available, i.e. `(room_in_apt==0)`.
+
+```{r filter_data}
+# Filter for San Francisco and full unit rentals
+sf_rentals <- rental_data |>
+  filter(city == "san francisco" & room_in_apt == 0)
+```
+
+Choose the neighborhoods we want to include in your visualization. To limit the number of neighborhoods, we can create a category called "Other" that combines less common neighborhoods:
+
+```{r filter_nhoods}
+# Choose up to 8 neighborhoods, combining others into "Other"
+top_neighborhoods <- sf_rentals |> 
+  count(nhood) |>   
+  top_n(7, n) |>     
+  pull(nhood)        
+
+sf_rentals <- sf_rentals |>
+  mutate(nhood = ifelse(nhood %in% top_neighborhoods, as.character(nhood), "Other")) |>                
+  drop_na()         
+```
+
+1.  Getting count of all neighborhoods
+
+2.  Getting top 7 neighborhoods
+
+3.  Extracting only `nhood` column
+
+4.  Modifying the column `nhood` based on the extracted 7 neighborhoods and marking the rest of them as `Other`
+
+5.  Dropping the rows with `NA` values
+
+### Violin Plot
+
+We will be generating a violin plot based on `beds`, `price` and `nhood` columns. To generate the plot we will be using `geom_violin` geom. We have some components involved in the code which are mentioned below:
+
+-   Used `geom_violin()` while plotting the violin plot where I highlighted the 50th percentile as well.
+
+-   Along with I have also included `geom_boxplot()` to plot a box plot with lesser width.
+
+-   Used `scale_fill_brewer()` to change the filled colors in the density plot. Selected palette as `Spectral` after going through some palettes in web.
+
+-   Next we will be setting labels in the plot using `labs()` to set axis labels, title etc,.
+
+-   Then we flipped the axes with `coord_flip()`.
+
+-   We are setting the theme of the plot using `theme_minimal()` and setting the legend position, text size and colors of labels.
+
+```{r rental_violin_plot, warning=FALSE, message=FALSE}
+# Creating a violin plot
+# Using the sf_rentals variable created earlier as a data source
+# year as the x, price/beds as y and nhood as a color aesthetic in box plot
+
+ggplot(sf_rentals, aes(x = nhood, y = price / beds, fill = nhood)) +
+  geom_violin() +    # Set trim to FALSE for wider violins
+  geom_boxplot(width = 0.1, fill = "white") +
+  scale_y_continuous(
+    labels = scales::dollar_format(scale = 1 / 1000, suffix = "K")) +  
+  scale_fill_brewer(palette = "Spectral", guide = NULL) +
+  labs(title = "Variation in Rental Prices per Bedroom in San Francisco",
+       subtitle = "Exploring Price Trends Across San Francisco Neighborhoods",
+       x = "Neighborhood",
+       y = "Price per Bedroom (in thousand)") +
+  coord_flip() +
+  theme_minimal()
+```
+
+1.  Using \`scale_y_continuous()\` to make the y-axis as dollars.
+
+2.  Modifying the legend size so that it will fit the plot correctly.
+
+3.  Changing the margin of legend text.
+
+***Why Violin Plot?***
+
+I specifically chose violin plot because it provides the entire distribution of the data, including measures such as the median, quartiles, and potential outliers. This makes it suitable for comparing the distribution of rental prices in different neighborhoods. And we can also plot a box plot on top of violin plot which makes to correlate both the distributions. It helps us to compare the distributions of a continuous variable across multiple categories and examine their variability.
+
+***Interpretation:***
+
+In this visualization each violin plot shows the range of prices, per bedroom for the chosen neighborhoods in San Francisco. The shape of each neighborhoods violin represents how rental prices per bedroom are distributed within that area. The width of the violin at any point reflects the number of data points in that price range. The thicker part of each violin indicates the median of rental price per bedroom for that neighborhood. This plot allows us to compare how rental prices per bedroom vary across neighborhoods in San Francisco during the selected years. For instance we can see that `Sea Cliff` generally has rental prices compared to other neighborhoods.
+
+Overall the violin plot helps us grasp how rental prices are spread out and differ across neighborhoods in San Francisco making it a valuable tool, for comparing dynamics in the market.
+
+## 5 - Napoleon's march.
+
+### Getting Started:
+
+First, we will load the necessary libraries for this `napolaon's march` plot. Then we will be reading the data from the .RDS file using the following code:
+
+```{r load_packages_napoleon, warning=FALSE, message=FALSE}
+napoleon <- readRDS("./data/napoleon.rds")
+
+cities <- napoleon$cities 
+
+troops <- napoleon$troops 
+
+temps <- napoleon$temperatures
+```
+
+1.  Getting cities data from napoleon RDS file.
+
+2.  Getting troops data from napoleon RDS file.
+
+3.  Getting temperatures data from napoleon RDS file.
+
+### Original Napoleon Plot
+
+Getting some information related the read data `cities`, `troops` and `temps`.
+
+```{r data_info}
+cities |>
+  glimpse() 
+
+troops |>
+  glimpse() 
+
+temps |> 
+  glimpse() 
+```
+
+To plot thecform which we get a basic skeleton of the original plot. We have three basic component in the initial plot which is as follows:
+
+1.  `geom_path` - We are plotting the data using `long`, `lat` columns. And due to the usage of `group` column casused separate lines for the different divisions involved. And in the plot aesthetic `aes` we added `color` to differentiate between advancing and retreating. And also configured `size` to be based on the number of survivors so that it will clear how many people advances and retreated. The individual segments of the path don't fit together very well and leave big gaps. We can fix that by adding a rounded line ending to each segment by using `lineend = "round"`.
+
+2.  `geom_point` - The cities in the original data can easily be added with `geom_point()`. We will be marking points of `lat` and `long` columns data wile using the cities data.
+
+3.  `geom_text_repel` - function from the `ggrepel` package to automatically move the labels away from points and to ensure none of the labels overlap.
+
+```{r troops_plot_map, warning=FALSE, message=FALSE}
+napoleon_plot_simple <- ggplot() +
+  geom_path(
+    data = troops,
+    aes(x = long,
+        y = lat,
+        group = group,
+        color = direction,
+        size = survivors ),
+        lineend = "round") +
+  geom_point(data = cities,
+             aes(x = long, y = lat),
+             color = "#964B00") +
+  geom_text_repel(data   = cities, 
+                  aes(x  = long, y = lat, label = city)) +
+  scale_size(range = c(0.5, 10)) +
+  scale_colour_manual(values = c("#DFC17E", "gray")) +
+  guides(color = FALSE, size = FALSE) + 
+  labs(title    = "Napoleon's Russian campaign",
+       subtitle = "Figurative Map of the successive losses in Russian campaign",
+       x        = "Longitude",
+       y        = "Latitude") +
+  theme_minimal()
+
+napoleon_plot_simple
+```
+
+In the next step we are concatenating the temperature , month and day column values to a new column `concat_temp`. This is being done by `paste0()` for string concatenation.
+
+```{r temps_data}
+temps_concat <- temps |>
+  mutate(concat_temp = paste0(temp, "°, ", month, ". ", day))
+```
+
+1.  Adding a new column names concat_temp which will contain the concatenated value of temp, month and day in it.
+
+In Minard's original plot - we also should plot the temperatures during the retreat and the days of the retreat. Minard put this infomration in a separate plot under the map.
+
+To plot the temperature plot associated with it we will be using the the `temp` - temperature, `long` - longitude columns to form a basic plot of temperature variation of the plot. We have four basic component in the initial plot which is as follows:
+
+1.  `geom_line` - We are plotting the data using `long`, `temp` columns. A basic line graph is plotted.
+
+2.  `geom_label` - The variable which we created earlier `concat_temp` is being used here as an aesthetic for labeling purpose. and I have configured a font and it's size make it more visible.
+
+3.  `scale_x_continuous` - Since we want to show both map and temperature plot in same panel, we need to make sure that the axis scale is aliging with each other. We need to use the same x-axis limits used in`napoleon_plot_simple`. Those limits are buried inside the plot object, the parts of which can be accessed with `ggplot_build()`. To scale the x axis we will be using `scale_x_continuous`.
+
+4.  `scale_y_continuous` - Using this function to move y axis to the right side of the plot.
+
+Another notable things involved are `theme_minimal()` and setting the Cartesian co-ordinates limit using `coord_cartesion()`. Which is is used to set the limits for y-axis without filtering the data points. All the `theme()` parameters are set to `element_blank()`.
+
+We will now plot the second part of the napoleons chart which we
+
+```{r troops_plot_temp}
+# Change the x-axis limits to match the simple map
+temps_plot <-
+  ggplot(data = temps_concat,
+         aes(x = long, y = temp)) +      
+  geom_line() +                          
+  geom_label(aes(label = concat_temp),
+              size = 2.5) +
+  labs(x = NULL, 
+       y = "° Celsius") +
+  scale_x_continuous(limits = ggplot_build(napoleon_plot_simple)$layout$panel_ranges[[1]]$x.range) +
+  scale_y_continuous(position = "right") +
+  coord_cartesian(ylim = c(-35, 5)) +              
+  theme_minimal() 
+
+temps_plot
+```
+
+1.  Creates the panel, which is a basic line graph with text added at each point.
+
+2.  Setting the Cartesian limit on y-axis from -35 to 5
+
+To align the two plot which were generated earlier we are using the `rbind()` function used to combine or stack data together. Then we need to adjust the panels as shown in the code below. To modify the panel heights to fit both of them correctly we can change the panel heights units and try and set the correct values which seems to fit it.
+
+```{r napoleon_plot, warning=FALSE, message=FALSE}
+# Combine the two plots
+napoleon_plot <- rbind(ggplotGrob(napoleon_plot_simple),
+                               ggplotGrob(temps_plot))
+
+# Adjust panels
+panels <- napoleon_plot$layout$t[grep("panel", napoleon_plot$layout$name)]
+
+#we can use whatever relative numbers we want, like a 4:1 ratio
+napoleon_plot$heights[panels] <- unit(c(4, 3), "null")
+
+grid::grid.newpage()
+grid::grid.draw(napoleon_plot)
+```
+
+## References:
+
+| [Content Reference : [Andrew Heiss Blog](https://www.andrewheiss.com/blog/2017/08/10/exploring-minards-1812-plot-with-ggplot2/)]{.smallcaps}
+| [Aligning Plots: [stack Overflow](https://stackoverflow.com/questions/24331107/the-perils-of-aligning-plots-in-ggplot/24333504#24333504)]{.smallcaps}
+| [GGplot functions: [GGPLOT](https://ggplot2.tidyverse.org/reference/index.html)]{.smallcaps}
+| [Debugging purposes: stack overflow and chatgpt]{.smallcaps}
