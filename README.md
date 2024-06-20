@@ -1,19 +1,10 @@
 # homework-01
 
-For any exercise where you’re writing code, insert a code chunk and make
-sure to label the chunk. Use a short and informative label. For any
-exercise where you’re creating a plot, make sure to label all axes,
-legends, etc. and give it an informative title. For any exercise where
-you’re including a description and/or interpretation, use full
-sentences. Make a commit at least after finishing each exercise, or
-better yet, more frequently. Push your work regularly to GitHub. Once
-you’re done, inspect your GitHub repo to make sure it has all the
-components you want to submit in the `hw-01.md` file, including the
-prose, the code, and all plots.
+For any exercise where you're writing code, insert a code chunk and make sure to label the chunk. Use a short and informative label. For any exercise where you're creating a plot, make sure to label all axes, legends, etc. and give it an informative title. For any exercise where you're including a description and/or interpretation, use full sentences. Make a commit at least after finishing each exercise, or better yet, more frequently. Push your work regularly to GitHub. Once you're done, inspect your GitHub repo to make sure it has all the components you want to submit in the `hw-01.qmd` file, including the prose, the code, and all plots.
 
 ## Question 1
 
-**Road traffic accidents in Edinburgh.** Next we’ll look at traffic accidents in Edinburgh. The data are made available [online](https://data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data/datafile/36f1658e-b709-47e7-9f56-cca7aefeb8fe/preview) by the UK Government. It covers all recorded accidents in Edinburgh in 2018 and some of the variables were modified for the purposes of this assignment. The data can be found in the **dsbox** package, and it’s called `accidents`. You can find out more about the dataset by inspecting its documentation with `?accidents` and you can also find this information [here](https://rstudio-education.github.io/dsbox/reference/accidents.html). Recreate the following plot, and interpret in context of the data.
+**Road traffic accidents in Edinburgh.** Next we'll look at traffic accidents in Edinburgh. The data are made available [online](https://data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data/datafile/36f1658e-b709-47e7-9f56-cca7aefeb8fe/preview) by the UK Government. It covers all recorded accidents in Edinburgh in 2018 and some of the variables were modified for the purposes of this assignment. The data can be found in that `data/` folder and its called `accidents`. You can also find this information [here](#0). Recreate the following plot, and interpret in context of the data.
 
 ![](images/edi-accidents-1.png)<!-- -->
 
@@ -85,24 +76,25 @@ c. Recreate the R code necessary to generate the following graphs.
 
 ## Question 4
 
-**Rental apartments in SF.** The data for this exercise comes from 
-    TidyTuesday and it's on rental prices in San Francisco. You can find 
-    out more about the dataset by inspecting its documentation 
-    [here](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-05). The dataset you'll be using is called `rent`.
-    Create a visualization that will help you compare the distribution
-    of rental prices (`price`) per bedroom (`beds`) across neighborhoods 
-    (`nhood`) in the city of San Francisco (`city == "san francisco"`), 
-    over time. Limit your analysis to rentals where the full unit is available,
-    i.e. (`room_in_apt	== 0`). You have the flexibility to choose which years 
-    and which neighborhoods. Note that you should have a maximum of 8 
-    neighborhoods on your visualization, but one or more of them can be a 
-    combination of many (e.g., an "other" category). Your visualization should 
-    also display some measure of the variability in your data. You
-    get to decide what type of visualization to create and there is more
-    than one correct answer! In your answer, include a brief description of
-    why you made the choices you made as well as an interpretation of the 
-    findings of how rental prices vary over time and neighborhoods in 
-    San Francisco.
+**Credit card balances.** The data for this exercise is on credit card balances. The dataset is in the data folder of your repository, and it’s called `credit.csv`. It contains the following variables:
+
+- `balance`: Credit card balance in $
+- `income`: Income in $1,000
+- `student`: Whether the individual is a student (Yes) or not (No)
+- `married`: Whether the individual is a married (Yes) or not (No)
+- `limit`: Credit limit
+
+a. Recreate the following visualization. The only aspect you do not need to match are the colors, however you should use a pair of colors of your own choosing to indicate students and non-students. Choose colors that appear “distinct enough” from each other to you. Then, describe the relationship between income and credit card balance, touching on how/if the relationship varies based on whether the individual is a student or not or whether they’re married or not.
+
+![](images/credit-1.png)
+
+b. Based on your answer to part (a), do you think `married` and `student` might be useful predictors, in addition to `income` for predicting credit card balance? Explain your reasoning.
+
+c. Credit utilization is defined as the proportion of credit balance to credit limit. Calculate credit utilization for all individuals in the `credit` data, and use it to recreate the following visualization. Once again, the only aspect of the visualization you do not need to match are the colors, but you should use the same colors from the previous exercise.
+
+![](images/credit-2.png)
+
+d. Based on the plot from part (c), how, if at all, are the relationships between income and credit utilization different than the relationships between income and credit balance for individuals with various student and marriage status.
 
 ## Question 5
 

@@ -1,0 +1,4 @@
+- source: hw-01.qmd
+  connect:
+    - id: 1712b1c2-204a-4b7b-8b65-ba01b120ca1f
+      url: 'https://viz.datascience.arizona.edu:443/content/1712b1c2-204a-4b7b-8b65-ba01b120ca1f/'

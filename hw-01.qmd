@@ -14,7 +14,9 @@ toc: true
 ## 0 - Set up
 
 ```{r load_libraries}
-#| message: false
+#| label:  load_libraries
+#| output: false
+
 if (!require("pacman")) 
   install.packages("pacman")
 
@@ -29,7 +31,8 @@ pacman::p_load(devtools,
                ggrepel,
                patchwork,
                units)
-devtools::install_github("tidyverse/dsbox")
+
+pacman::p_load_gh("tidyverse/dsbox")
 ```
 
 1.  This block is to check if `pacman` package is installed or not, if it isn't then the package will be installed.
